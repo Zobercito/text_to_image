@@ -19,7 +19,7 @@ A simple and lightweight desktop application built in Python using Tkinter. It c
 
 1.  Clone the repository:
     ```bash
-    git clone [https://github.com/YOUR_USERNAME/txt2img-converter.git](https://github.com/YOUR_USERNAME/txt2img-converter.git)
+    git clone https://github.com/Zobercito/text_to_image.git
     cd txt2img-converter
     ```
 
