@@ -1,4 +1,7 @@
-# 📝 Txt2Img Converter
+<div align="center">
+  <img src="logo.png" alt="Logo Txt2Img" width="150">
+  <h1>📝 Txt2Img Converter</h1>
+</div>
 
 A simple and lightweight desktop application built in Python using Tkinter. It converts any code snippet or text into a high-resolution JPG image, perfect for sharing on social media or in documentation.
 
@@ -19,7 +22,7 @@ A simple and lightweight desktop application built in Python using Tkinter. It c
 
 1.  Clone the repository:
     ```bash
-    git clone https://github.com/Zobercito/text_to_image.git
+    git clone [https://github.com/Zobercito/text_to_image.git](https://github.com/Zobercito/text_to_image.git)
     cd txt2img-converter
     ```
 
