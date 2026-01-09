@@ -59,6 +59,11 @@ class ConversorApp:
         self.centro_botones = tk.Frame(panel_bottom, bg="#2E2E2E")
         self.centro_botones.pack(anchor="center")
 
+        # Botón de configuración (Engranaje)
+        btn_config = tk.Button(self.centro_botones, text="⚙", 
+            bg="#444444", fg="white", font=("Arial", 9, "bold"), width=5, relief="flat")
+        btn_config.pack(side="left", padx=10)
+
         btn_borrar = tk.Button(self.centro_botones, text="BORRAR", command=self.borrar_texto,
             bg="#A63434", fg="white", font=("Arial", 9, "bold"), width=8, relief="flat")
         btn_borrar.pack(side="left", padx=10)
@@ -74,41 +79,35 @@ class ConversorApp:
         self.status_default = "Ningún archivo seleccionado"
         self.status_var = tk.StringVar(value=self.status_default)
         self.status_bar = tk.Label(root, textvariable=self.status_var, bd=1, relief=tk.SUNKEN, 
-                                   anchor=tk.CENTER, bg="#1E1E1E", fg="#888888", font=("Arial", 9))
+            anchor=tk.CENTER, bg="#1E1E1E", fg="#888888", font=("Arial", 9))
         self.status_bar.pack(side=tk.BOTTOM, fill=tk.X, ipady=3)
 
     # --- GESTIÓN DE INTERFAZ (SOLUCIÓN AL BUG VISUAL) ---
 
     def _actualizar_esquina(self):
         """Muestra el cuadrado de la esquina solo si ambas barras están presentes"""
-        # Verificamos si ambas barras están dibujadas en el grid actualmente
         if self.v_scrollbar.winfo_ismapped() and self.h_scrollbar.winfo_ismapped():
             self.esquina.grid(row=1, column=1, sticky="nsew")
         else:
             self.esquina.grid_forget()
 
     def _gestionar_vbar(self, first, last):
-        """Gestiona la barra vertical limitándola estrictamente a su celda"""
         if float(first) <= 0.0 and float(last) >= 1.0:
             self.v_scrollbar.grid_remove()
         else:
-            # Forzamos row=0 para que NUNCA baje a la zona de la esquina o scroll H
             self.v_scrollbar.grid(row=0, column=1, sticky="ns")
         self.v_scrollbar.set(first, last)
-        # Usamos after_idle para que la comprobación de la esquina ocurra tras el renderizado
         self.root.after_idle(self._actualizar_esquina)
 
     def _gestionar_hbar(self, first, last):
-        """Gestiona la barra horizontal limitándola estrictamente a su celda"""
         if float(first) <= 0.0 and float(last) >= 1.0:
             self.h_scrollbar.grid_remove()
         else:
-            # Forzamos col=0 para que NUNCA invada la zona de la esquina o scroll V
             self.h_scrollbar.grid(row=1, column=0, sticky="ew")
         self.h_scrollbar.set(first, last)
         self.root.after_idle(self._actualizar_esquina)
 
-    # --- LÓGICA DE ARCHIVOS Y TEXTO (SIN CAMBIOS) ---
+    # --- LÓGICA DE ARCHIVOS Y TEXTO ---
 
     def _recortar_ruta(self, ruta):
         partes = ruta.split(os.sep)
