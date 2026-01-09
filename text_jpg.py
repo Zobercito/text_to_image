@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 import tkinter as tk
 from tkinter import messagebox, filedialog
-from PIL import Image, ImageDraw, ImageFont, ImageTk  # Añadido ImageTk
+from PIL import Image, ImageDraw, ImageFont, ImageTk
 import os
 from datetime import datetime
 
@@ -13,7 +13,12 @@ class ConversorApp:
         self.root.configure(bg="#2E2E2E")
 
         # --- CONFIGURACIÓN DE RUTA Y COLORES ---
-        self.ruta_salida = os.path.expanduser("~/Descargas")
+        # Por defecto buscamos la carpeta de Imágenes del usuario (compatible con Win/Linux)
+        self.ruta_salida = os.path.join(os.path.expanduser("~"), "Pictures")
+        # Si no existe (en algunos Linux está en español o no existe), usamos Descargas como respaldo
+        if not os.path.exists(self.ruta_salida):
+            self.ruta_salida = os.path.expanduser("~/Descargas")
+            
         self.placeholder = "Coloca tu texto aqui"
         self.color_placeholder = "#888888"
         self.color_texto_normal = "#D4D4D4"
@@ -55,14 +60,13 @@ class ConversorApp:
         self.centro_botones = tk.Frame(panel_bottom, bg="#2E2E2E")
         self.centro_botones.pack(anchor="center")
 
-# Configuración del icono del botón
+        # Configuración del icono del botón
         self.icon_config = None
         ruta_script = os.path.dirname(os.path.abspath(__file__))
         ruta_icono = os.path.join(ruta_script, "assets", "config_icon.png")
         
         try:
             img_original = Image.open(ruta_icono)
-            
             try:
                 filtro = Image.Resampling.LANCZOS
             except AttributeError:
@@ -71,23 +75,20 @@ class ConversorApp:
             img_resizada = img_original.resize((18, 18), filtro)
             self.icon_config = ImageTk.PhotoImage(img_resizada)
             
-            # Ajuste de dimensiones y eliminación de bordes extra
             btn_config = tk.Button(
                 self.centro_botones, 
                 image=self.icon_config, 
                 bg="#444444", 
                 relief="flat", 
-                width=26,              # Ancho reducido para estar más pegado
-                height=26,             # Alto reducido para estar más pegado
-                borderwidth=0,         # Elimina el borde físico
-                highlightthickness=0,  # Elimina el marco blanco de selección
-                padx=0,                # Elimina espacio interno horizontal
-                pady=0                 # Elimina espacio interno vertical
+                width=26, height=26,
+                borderwidth=0, highlightthickness=0,
+                padx=0, pady=0,
+                command=self.abrir_configuracion # Mantiene la lógica del comando
             )
         except Exception as e:
-            print(f"DEBUG: No se pudo cargar el icono: {e}")
             btn_config = tk.Button(self.centro_botones, text="⚙", 
-                bg="#444444", fg="white", font=("Arial", 9, "bold"), width=5, relief="flat")
+                bg="#444444", fg="white", font=("Arial", 9, "bold"), width=5, 
+                relief="flat", command=self.abrir_configuracion)
 
         btn_config.pack(side="left", padx=10)
 
@@ -108,6 +109,46 @@ class ConversorApp:
         self.status_bar = tk.Label(root, textvariable=self.status_var, bd=1, relief=tk.SUNKEN, 
             anchor=tk.CENTER, bg="#1E1E1E", fg="#888888", font=("Arial", 9))
         self.status_bar.pack(side=tk.BOTTOM, fill=tk.X, ipady=3)
+
+    # --- VENTANA DE CONFIGURACIÓN ---
+
+    def abrir_configuracion(self):
+        """Crea una ventana modal para la configuración del programa"""
+        ventana_cfg = tk.Toplevel(self.root)
+        ventana_cfg.title("Configuración")
+        ventana_cfg.geometry("450x150")
+        ventana_cfg.configure(bg="#2E2E2E")
+        ventana_cfg.resizable(False, False)
+
+        # Hacer la ventana modal
+        ventana_cfg.transient(self.root)
+        ventana_cfg.grab_set()
+
+        tk.Label(ventana_cfg, text="Ruta de guardado de las imagenes:", 
+                 bg="#2E2E2E", fg="white", font=("Arial", 10, "bold")).pack(pady=(15, 5))
+
+        # Contenedor para la ruta y el botón de búsqueda
+        frame_ruta = tk.Frame(ventana_cfg, bg="#2E2E2E")
+        frame_ruta.pack(fill="x", padx=20)
+
+        self.lbl_ruta_actual = tk.Label(frame_ruta, text=self.ruta_salida, 
+                                       bg="#1E1E1E", fg="#D4D4D4", font=("Consolas", 9),
+                                       relief="flat", anchor="w", padx=5)
+        self.lbl_ruta_actual.pack(side="left", expand=True, fill="x")
+
+        btn_cambiar = tk.Button(frame_ruta, text="...", command=self._seleccionar_carpeta,
+                               bg="#444444", fg="white", width=3, relief="flat")
+        btn_cambiar.pack(side="right", padx=(5, 0))
+
+        btn_cerrar = tk.Button(ventana_cfg, text="ACEPTAR", command=ventana_cfg.destroy,
+                              bg="#2A8C55", fg="white", font=("Arial", 9, "bold"), width=10, relief="flat")
+        btn_cerrar.pack(pady=20)
+
+    def _seleccionar_carpeta(self):
+        nueva_ruta = filedialog.askdirectory(initialdir=self.ruta_salida, title="Seleccionar Carpeta de Guardado")
+        if nueva_ruta:
+            self.ruta_salida = nueva_ruta
+            self.lbl_ruta_actual.config(text=self.ruta_salida)
 
     # --- GESTIÓN DE INTERFAZ ---
 
@@ -214,8 +255,10 @@ class ConversorApp:
             img = Image.new('RGB', (int(w), int(h)), color=(30, 30, 30))
             draw = ImageDraw.Draw(img)
             draw.text((padding, padding), texto_procesado, font=font, fill=(220, 220, 220))
+            
             if not os.path.exists(self.ruta_salida):
                 os.makedirs(self.ruta_salida)
+                
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
             nombre_archivo = f"imgtxt_{timestamp}.jpg"
             ruta_completa = os.path.join(self.ruta_salida, nombre_archivo)
