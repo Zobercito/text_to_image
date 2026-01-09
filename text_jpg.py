@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 import tkinter as tk
-from tkinter import messagebox
+from tkinter import messagebox, filedialog  # Se agrega filedialog
 from PIL import Image, ImageDraw, ImageFont
 import os
 from datetime import datetime
@@ -48,26 +48,21 @@ class ConversorApp:
         panel_bottom = tk.Frame(root, bg="#2E2E2E")
         panel_bottom.pack(fill="x", pady=5)
 
-        # Contenedor interno para centrar el grupo de botones
         self.centro_botones = tk.Frame(panel_bottom, bg="#2E2E2E")
         self.centro_botones.pack(anchor="center")
 
-        # Botón Borrar (Izquierda - Ancho 8)
         btn_borrar = tk.Button(self.centro_botones, text="BORRAR", command=self.borrar_texto,
             bg="#A63434", fg="white", font=("Arial", 9, "bold"), width=8, relief="flat")
-        btn_borrar.pack(side="left", padx=10) # 10px de margen (total 20px entre botones)
+        btn_borrar.pack(side="left", padx=10)
 
-        # Botón Abrir (Centro - Ancho 10)
         btn_abrir = tk.Button(self.centro_botones, text="ABRIR ARCHIVO", command=self.abrir_archivo,
             bg="#3465A4", fg="white", font=("Arial", 9, "bold"), width=12, relief="flat")
         btn_abrir.pack(side="left", padx=10)
 
-        # Botón Convertir (Derecha - Ancho 8)
         btn_convertir = tk.Button(self.centro_botones, text="CONVERTIR", command=self.convertir,
             bg="#2A8C55", fg="white", font=("Arial", 9, "bold"), width=8, relief="flat")
         btn_convertir.pack(side="left", padx=10)
 
-    # --- LÓGICA DE BARRAS DINÁMICAS ---
     def _gestionar_vbar(self, first, last):
         if float(first) <= 0.0 and float(last) >= 1.0:
             self.v_scrollbar.grid_remove()
@@ -82,7 +77,6 @@ class ConversorApp:
             self.h_scrollbar.grid(row=1, column=0, sticky="ew")
         self.h_scrollbar.set(first, last)
 
-    # --- LÓGICA DEL PLACEHOLDER ---
     def _limpiar_placeholder(self, event):
         contenido_actual = self.texto_input.get("1.0", tk.END).strip()
         if contenido_actual == self.placeholder:
@@ -103,8 +97,29 @@ class ConversorApp:
             self.texto_input.config(fg=self.color_texto_normal)
 
     def abrir_archivo(self):
-        """Manejador para el botón abrir (sin lógica aún)."""
-        pass
+        """Abre un explorador de archivos y carga el texto en el área de entrada."""
+        # Se permite cualquier tipo de archivo (*.*)
+        ruta_archivo = filedialog.askopenfilename(
+            title="Seleccionar archivo",
+            filetypes=(("Todos los archivos", "*.*"),)
+        )
+        
+        if ruta_archivo:
+            try:
+                # 'errors=replace' permite leer archivos binarios o encriptados 
+                # mostrando símbolos en lugar de fallar.
+                with open(ruta_archivo, 'r', encoding='utf-8', errors='replace') as f:
+                    contenido = f.read()
+                
+                # Limpiamos el widget, quitamos placeholder y seteamos el color normal
+                self.texto_input.delete("1.0", tk.END)
+                self.texto_input.config(fg=self.color_texto_normal)
+                
+                # Insertamos el texto del archivo
+                self.texto_input.insert("1.0", contenido)
+                
+            except Exception as e:
+                messagebox.showerror("Error", f"No se pudo leer el archivo:\n{str(e)}")
 
     def obtener_fuente(self, tamano):
         fuentes_linux = [
