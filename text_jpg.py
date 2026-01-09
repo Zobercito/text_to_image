@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 import tkinter as tk
-from tkinter import messagebox, scrolledtext
+from tkinter import messagebox
 from PIL import Image, ImageDraw, ImageFont
 import os
 from datetime import datetime
@@ -19,11 +19,24 @@ class ConversorApp:
         self.color_texto_normal = "#D4D4D4"
 
         # --- ÁREA DE TEXTO ---
-        self.texto_input = scrolledtext.ScrolledText(root, wrap=tk.NONE, bg="#1E1E1E", 
-            fg=self.color_placeholder, # Inicia con color de placeholder
+        self.container_texto = tk.Frame(root, bg="#1E1E1E")
+        self.container_texto.pack(expand=True, fill="both", padx=10, pady=10)
+        
+        # Configuramos la rejilla (grid) del contenedor
+        self.container_texto.grid_rowconfigure(0, weight=1)
+        self.container_texto.grid_columnconfigure(0, weight=1)
+
+        self.scrollbar = tk.Scrollbar(self.container_texto)
+        
+        self.texto_input = tk.Text(self.container_texto, wrap=tk.NONE, bg="#1E1E1E", 
+            fg=self.color_placeholder, 
             font=("Consolas", 10), insertbackground="white", 
-            height=8)
-        self.texto_input.pack(expand=True, fill="both", padx=10, pady=10)
+            height=8, undo=True,
+            highlightthickness=1, highlightbackground="#444444",
+            yscrollcommand=self._gestionar_scrollbar)
+        
+        self.texto_input.grid(row=0, column=0, sticky="nsew")
+        self.scrollbar.config(command=self.texto_input.yview)
         
         # Insertar placeholder inicial y configurar eventos
         self.texto_input.insert("1.0", self.placeholder)
@@ -41,6 +54,14 @@ class ConversorApp:
         btn_convertir = tk.Button(panel_bottom, text="CONVERTIR", command=self.convertir,
             bg="#2A8C55", fg="white", font=("Arial", 9, "bold"), width=15, relief="flat")
         btn_convertir.pack(side="right", padx=10)
+
+    def _gestionar_scrollbar(self, first, last):
+        """Muestra u oculta el scrollbar usando grid_remove para no perder la configuración."""
+        if float(first) <= 0.0 and float(last) >= 1.0:
+            self.scrollbar.grid_remove()
+        else:
+            self.scrollbar.grid(row=0, column=1, sticky="ns")
+        self.scrollbar.set(first, last)
 
     # --- LÓGICA DEL PLACEHOLDER ---
     def _limpiar_placeholder(self, event):
@@ -60,12 +81,9 @@ class ConversorApp:
     def borrar_texto(self):
         """Limpia el texto y maneja inteligentemente el placeholder."""
         self.texto_input.delete("1.0", tk.END)
-        
-        # Si el foco NO está en el widget, ponemos el placeholder
         if self.root.focus_get() != self.texto_input:
             self._restaurar_placeholder(None)
         else:
-            # Si el usuario está 'dentro', dejamos listo para escribir con color normal
             self.texto_input.config(fg=self.color_texto_normal)
 
     def obtener_fuente(self, tamano):
@@ -84,8 +102,6 @@ class ConversorApp:
     def convertir(self):
         """Procesa el texto y lo guarda como imagen JPG."""
         contenido = self.texto_input.get("1.0", tk.END).strip()
-        
-        # No permitir conversión si está vacío o si es solo el placeholder
         if not contenido or contenido == self.placeholder:
             messagebox.showwarning("Vacío", "El cuadro de texto está vacío.")
             return
@@ -96,7 +112,6 @@ class ConversorApp:
         try:
             font = self.obtener_fuente(font_size)
             dummy_draw = ImageDraw.Draw(Image.new('RGB', (1, 1)))
-            
             lines = contenido.split("\n")
             if lines and not lines[-1].strip(): lines.pop()
             texto_procesado = "\n".join(lines)
@@ -115,7 +130,6 @@ class ConversorApp:
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
             nombre_archivo = f"imgtxt_{timestamp}.jpg"
             ruta_completa = os.path.join(self.ruta_salida, nombre_archivo)
-
             img.save(ruta_completa, "JPEG", quality=100, optimize=True, subsampling=0)
             messagebox.showinfo("Listo", f"Guardado:\n{nombre_archivo}")
 
