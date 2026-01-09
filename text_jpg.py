@@ -18,26 +18,31 @@ class ConversorApp:
         self.color_placeholder = "#888888"
         self.color_texto_normal = "#D4D4D4"
 
-        # --- ÁREA DE TEXTO ---
+        # --- ÁREA DE TEXTO CON SCROLLS DINÁMICOS ---
         self.container_texto = tk.Frame(root, bg="#1E1E1E")
         self.container_texto.pack(expand=True, fill="both", padx=10, pady=10)
         
-        # Configuramos la rejilla (grid) del contenedor
+        # Pesos para que el cuadro de texto se expanda y las barras no
         self.container_texto.grid_rowconfigure(0, weight=1)
         self.container_texto.grid_columnconfigure(0, weight=1)
 
-        self.scrollbar = tk.Scrollbar(self.container_texto)
+        # Barras de desplazamiento
+        self.v_scrollbar = tk.Scrollbar(self.container_texto, orient=tk.VERTICAL)
+        self.h_scrollbar = tk.Scrollbar(self.container_texto, orient=tk.HORIZONTAL)
         
         self.texto_input = tk.Text(self.container_texto, wrap=tk.NONE, bg="#1E1E1E", 
-            fg=self.color_placeholder, 
+            fg=self.color_placeholder,
             font=("Consolas", 10), insertbackground="white", 
             height=8, undo=True,
             highlightthickness=1, highlightbackground="#444444",
-            yscrollcommand=self._gestionar_scrollbar)
+            yscrollcommand=self._gestionar_vbar,
+            xscrollcommand=self._gestionar_hbar)
         
         self.texto_input.grid(row=0, column=0, sticky="nsew")
-        self.scrollbar.config(command=self.texto_input.yview)
         
+        self.v_scrollbar.config(command=self.texto_input.yview)
+        self.h_scrollbar.config(command=self.texto_input.xview)
+
         # Insertar placeholder inicial y configurar eventos
         self.texto_input.insert("1.0", self.placeholder)
         self.texto_input.bind("<FocusIn>", self._limpiar_placeholder)
@@ -55,13 +60,22 @@ class ConversorApp:
             bg="#2A8C55", fg="white", font=("Arial", 9, "bold"), width=15, relief="flat")
         btn_convertir.pack(side="right", padx=10)
 
-    def _gestionar_scrollbar(self, first, last):
-        """Muestra u oculta el scrollbar usando grid_remove para no perder la configuración."""
+    # --- LÓGICA DE BARRAS DINÁMICAS ---
+    def _gestionar_vbar(self, first, last):
+        """Muestra u oculta la barra vertical."""
         if float(first) <= 0.0 and float(last) >= 1.0:
-            self.scrollbar.grid_remove()
+            self.v_scrollbar.grid_remove()
         else:
-            self.scrollbar.grid(row=0, column=1, sticky="ns")
-        self.scrollbar.set(first, last)
+            self.v_scrollbar.grid(row=0, column=1, sticky="ns")
+        self.v_scrollbar.set(first, last)
+
+    def _gestionar_hbar(self, first, last):
+        """Muestra u oculta la barra horizontal."""
+        if float(first) <= 0.0 and float(last) >= 1.0:
+            self.h_scrollbar.grid_remove()
+        else:
+            self.h_scrollbar.grid(row=1, column=0, sticky="ew")
+        self.h_scrollbar.set(first, last)
 
     # --- LÓGICA DEL PLACEHOLDER ---
     def _limpiar_placeholder(self, event):
