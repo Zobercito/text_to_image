@@ -20,8 +20,7 @@ class ConversorApp:
 
         # --- ÁREA DE TEXTO CON SCROLLS DINÁMICOS ---
         self.container_texto = tk.Frame(root, bg="#1E1E1E")
-        # Se ajusta pady para que no tenga margen inferior (pady=(10, 0))
-        self.container_texto.pack(expand=True, fill="both", padx=10, pady=(10, 0)) 
+        self.container_texto.pack(expand=True, fill="both", padx=10, pady=(10, 0))
         
         self.container_texto.grid_rowconfigure(0, weight=1)
         self.container_texto.grid_columnconfigure(0, weight=1)
@@ -46,17 +45,19 @@ class ConversorApp:
         self.texto_input.bind("<FocusOut>", self._restaurar_placeholder)
 
         # --- BOTONES ---
-        # Se elimina el pady interno del Frame para controlarlo externamente
-        panel_bottom = tk.Frame(root, bg="#2E2E2E") 
-        # pady=5 aplica el mismo espacio arriba (hacia el texto) y abajo (hacia el borde)
-        panel_bottom.pack(fill="x", pady=5) 
+        panel_bottom = tk.Frame(root, bg="#2E2E2E")
+        panel_bottom.pack(fill="x", pady=5)
 
         btn_borrar = tk.Button(panel_bottom, text="Borrar", command=self.borrar_texto,
             bg="#A63434", fg="white", font=("Arial", 9, "bold"), width=8, relief="flat")
         btn_borrar.pack(side="left", padx=10)
+    
+        btn_abrir = tk.Button(panel_bottom, text="Abrir archivo", command=self.abrir_archivo,
+            bg="#3465A4", fg="white", font=("Arial", 9, "bold"), width=12, relief="flat")
+        btn_abrir.pack(side="left", padx=10)
 
         btn_convertir = tk.Button(panel_bottom, text="CONVERTIR", command=self.convertir,
-            bg="#2A8C55", fg="white", font=("Arial", 9, "bold"), width=15, relief="flat")
+            bg="#2A8C55", fg="white", font=("Arial", 9, "bold"), width=10, relief="flat")
         btn_convertir.pack(side="right", padx=10)
 
     # --- LÓGICA DE BARRAS DINÁMICAS ---
@@ -93,6 +94,10 @@ class ConversorApp:
             self._restaurar_placeholder(None)
         else:
             self.texto_input.config(fg=self.color_texto_normal)
+
+    def abrir_archivo(self):
+        """Manejador para el botón abrir (sin lógica aún)."""
+        pass
 
     def obtener_fuente(self, tamano):
         fuentes_linux = [
