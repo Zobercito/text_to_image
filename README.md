@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="logo.png" alt="Logo Txt2Img" width="150">
+  <img src="assets/logo.png" alt="Logo Txt2Img" width="150">
   <h1>📝 Txt2Img Converter</h1>
 </div>
 
