@@ -20,13 +20,12 @@ class ConversorApp:
 
         # --- ÁREA DE TEXTO CON SCROLLS DINÁMICOS ---
         self.container_texto = tk.Frame(root, bg="#1E1E1E")
-        self.container_texto.pack(expand=True, fill="both", padx=10, pady=10)
+        # Se ajusta pady para que no tenga margen inferior (pady=(10, 0))
+        self.container_texto.pack(expand=True, fill="both", padx=10, pady=(10, 0)) 
         
-        # Pesos para que el cuadro de texto se expanda y las barras no
         self.container_texto.grid_rowconfigure(0, weight=1)
         self.container_texto.grid_columnconfigure(0, weight=1)
 
-        # Barras de desplazamiento
         self.v_scrollbar = tk.Scrollbar(self.container_texto, orient=tk.VERTICAL)
         self.h_scrollbar = tk.Scrollbar(self.container_texto, orient=tk.HORIZONTAL)
         
@@ -39,18 +38,18 @@ class ConversorApp:
             xscrollcommand=self._gestionar_hbar)
         
         self.texto_input.grid(row=0, column=0, sticky="nsew")
-        
         self.v_scrollbar.config(command=self.texto_input.yview)
         self.h_scrollbar.config(command=self.texto_input.xview)
 
-        # Insertar placeholder inicial y configurar eventos
         self.texto_input.insert("1.0", self.placeholder)
         self.texto_input.bind("<FocusIn>", self._limpiar_placeholder)
         self.texto_input.bind("<FocusOut>", self._restaurar_placeholder)
 
         # --- BOTONES ---
-        panel_bottom = tk.Frame(root, bg="#2E2E2E", pady=10)
-        panel_bottom.pack(fill="x")
+        # Se elimina el pady interno del Frame para controlarlo externamente
+        panel_bottom = tk.Frame(root, bg="#2E2E2E") 
+        # pady=5 aplica el mismo espacio arriba (hacia el texto) y abajo (hacia el borde)
+        panel_bottom.pack(fill="x", pady=5) 
 
         btn_borrar = tk.Button(panel_bottom, text="Borrar", command=self.borrar_texto,
             bg="#A63434", fg="white", font=("Arial", 9, "bold"), width=8, relief="flat")
@@ -62,7 +61,6 @@ class ConversorApp:
 
     # --- LÓGICA DE BARRAS DINÁMICAS ---
     def _gestionar_vbar(self, first, last):
-        """Muestra u oculta la barra vertical."""
         if float(first) <= 0.0 and float(last) >= 1.0:
             self.v_scrollbar.grid_remove()
         else:
@@ -70,7 +68,6 @@ class ConversorApp:
         self.v_scrollbar.set(first, last)
 
     def _gestionar_hbar(self, first, last):
-        """Muestra u oculta la barra horizontal."""
         if float(first) <= 0.0 and float(last) >= 1.0:
             self.h_scrollbar.grid_remove()
         else:
@@ -79,21 +76,18 @@ class ConversorApp:
 
     # --- LÓGICA DEL PLACEHOLDER ---
     def _limpiar_placeholder(self, event):
-        """Elimina el texto fantasma cuando el usuario hace clic para escribir."""
         contenido_actual = self.texto_input.get("1.0", tk.END).strip()
         if contenido_actual == self.placeholder:
             self.texto_input.delete("1.0", tk.END)
         self.texto_input.config(fg=self.color_texto_normal)
 
     def _restaurar_placeholder(self, event):
-        """Reinstaura el texto fantasma si el usuario deja el campo vacío."""
         contenido_actual = self.texto_input.get("1.0", tk.END).strip()
         if not contenido_actual:
             self.texto_input.insert("1.0", self.placeholder)
             self.texto_input.config(fg=self.color_placeholder)
 
     def borrar_texto(self):
-        """Limpia el texto y maneja inteligentemente el placeholder."""
         self.texto_input.delete("1.0", tk.END)
         if self.root.focus_get() != self.texto_input:
             self._restaurar_placeholder(None)
@@ -101,7 +95,6 @@ class ConversorApp:
             self.texto_input.config(fg=self.color_texto_normal)
 
     def obtener_fuente(self, tamano):
-        """Busca una fuente monoespaciada en el sistema."""
         fuentes_linux = [
             "/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf",
             "/usr/share/fonts/truetype/liberation/LiberationMono-Regular.ttf",
@@ -114,7 +107,6 @@ class ConversorApp:
         return ImageFont.load_default()
 
     def convertir(self):
-        """Procesa el texto y lo guarda como imagen JPG."""
         contenido = self.texto_input.get("1.0", tk.END).strip()
         if not contenido or contenido == self.placeholder:
             messagebox.showwarning("Vacío", "El cuadro de texto está vacío.")
