@@ -12,10 +12,27 @@ class ConversorApp:
         self.root.geometry("400x320")
         self.root.configure(bg="#2E2E2E")
 
+        # --- RUTA BASE Y ASSETS ---
+        self.ruta_script = os.path.dirname(os.path.abspath(__file__))
+        
+        # Icono del programa
+        try:
+            ruta_logo = os.path.join(self.ruta_script, "assets", "logo.png")
+            img_logo = Image.open(ruta_logo)
+            
+            try:
+                filtro = Image.Resampling.LANCZOS
+            except AttributeError:
+                filtro = Image.LANCZOS
+                
+            img_logo_resized = img_logo.resize((64, 64), filtro)
+            self.icon_ventana = ImageTk.PhotoImage(img_logo_resized)
+            self.root.iconphoto(True, self.icon_ventana)
+        except Exception as e:
+            print(f"DEBUG: No se pudo cargar el logo de la ventana: {e}")
+
         # --- CONFIGURACIÓN DE RUTA Y COLORES ---
-        # Por defecto buscamos la carpeta de Imágenes del usuario (compatible con Win/Linux)
         self.ruta_salida = os.path.join(os.path.expanduser("~"), "Pictures")
-        # Si no existe (en algunos Linux está en español o no existe), usamos Descargas como respaldo
         if not os.path.exists(self.ruta_salida):
             self.ruta_salida = os.path.expanduser("~/Descargas")
             
@@ -53,42 +70,31 @@ class ConversorApp:
         self.texto_input.bind("<FocusIn>", self._limpiar_placeholder)
         self.texto_input.bind("<FocusOut>", self._restaurar_placeholder)
 
-        # --- BOTONES CENTRADOS ---
+        # --- BOTONES ---
         panel_bottom = tk.Frame(root, bg="#2E2E2E")
         panel_bottom.pack(fill="x", pady=5)
 
         self.centro_botones = tk.Frame(panel_bottom, bg="#2E2E2E")
         self.centro_botones.pack(anchor="center")
 
-        # Configuración del icono del botón
+        # Botón Configuración (Icono Gear)
         self.icon_config = None
-        ruta_script = os.path.dirname(os.path.abspath(__file__))
-        ruta_icono = os.path.join(ruta_script, "assets", "config_icon.png")
+        ruta_icono_cfg = os.path.join(self.ruta_script, "assets", "config_icon.png")
         
         try:
-            img_original = Image.open(ruta_icono)
+            img_original = Image.open(ruta_icono_cfg)
             try:
                 filtro = Image.Resampling.LANCZOS
             except AttributeError:
                 filtro = Image.LANCZOS 
-                
             img_resizada = img_original.resize((18, 18), filtro)
             self.icon_config = ImageTk.PhotoImage(img_resizada)
-            
-            btn_config = tk.Button(
-                self.centro_botones, 
-                image=self.icon_config, 
-                bg="#444444", 
-                relief="flat", 
-                width=26, height=26,
-                borderwidth=0, highlightthickness=0,
-                padx=0, pady=0,
-                command=self.abrir_configuracion # Mantiene la lógica del comando
-            )
-        except Exception as e:
-            btn_config = tk.Button(self.centro_botones, text="⚙", 
-                bg="#444444", fg="white", font=("Arial", 9, "bold"), width=5, 
-                relief="flat", command=self.abrir_configuracion)
+            btn_config = tk.Button(self.centro_botones, image=self.icon_config, bg="#444444", 
+                relief="flat", width=26, height=26, borderwidth=0, highlightthickness=0,
+                padx=0, pady=0, command=self.abrir_configuracion)
+        except Exception:
+            btn_config = tk.Button(self.centro_botones, text="⚙", bg="#444444", fg="white", 
+                font=("Arial", 9, "bold"), width=5, relief="flat", command=self.abrir_configuracion)
 
         btn_config.pack(side="left", padx=10)
 
@@ -110,24 +116,20 @@ class ConversorApp:
             anchor=tk.CENTER, bg="#1E1E1E", fg="#888888", font=("Arial", 9))
         self.status_bar.pack(side=tk.BOTTOM, fill=tk.X, ipady=3)
 
-    # --- VENTANA DE CONFIGURACIÓN ---
+    # --- LÓGICA DE CONFIGURACIÓN ---
 
     def abrir_configuracion(self):
-        """Crea una ventana modal para la configuración del programa"""
         ventana_cfg = tk.Toplevel(self.root)
         ventana_cfg.title("Configuración")
         ventana_cfg.geometry("450x150")
         ventana_cfg.configure(bg="#2E2E2E")
         ventana_cfg.resizable(False, False)
-
-        # Hacer la ventana modal
         ventana_cfg.transient(self.root)
         ventana_cfg.grab_set()
 
         tk.Label(ventana_cfg, text="Ruta de guardado de las imagenes:", 
                  bg="#2E2E2E", fg="white", font=("Arial", 10, "bold")).pack(pady=(15, 5))
 
-        # Contenedor para la ruta y el botón de búsqueda
         frame_ruta = tk.Frame(ventana_cfg, bg="#2E2E2E")
         frame_ruta.pack(fill="x", padx=20)
 
@@ -145,12 +147,12 @@ class ConversorApp:
         btn_cerrar.pack(pady=20)
 
     def _seleccionar_carpeta(self):
-        nueva_ruta = filedialog.askdirectory(initialdir=self.ruta_salida, title="Seleccionar Carpeta de Guardado")
+        nueva_ruta = filedialog.askdirectory(initialdir=self.ruta_salida, title="Seleccionar Carpeta")
         if nueva_ruta:
             self.ruta_salida = nueva_ruta
             self.lbl_ruta_actual.config(text=self.ruta_salida)
 
-    # --- GESTIÓN DE INTERFAZ ---
+    # --- MÉTODOS DE SOPORTE (NO CAMBIAN) ---
 
     def _actualizar_esquina(self):
         if self.v_scrollbar.winfo_ismapped() and self.h_scrollbar.winfo_ismapped():
@@ -159,81 +161,58 @@ class ConversorApp:
             self.esquina.grid_forget()
 
     def _gestionar_vbar(self, first, last):
-        if float(first) <= 0.0 and float(last) >= 1.0:
-            self.v_scrollbar.grid_remove()
-        else:
-            self.v_scrollbar.grid(row=0, column=1, sticky="ns")
+        if float(first) <= 0.0 and float(last) >= 1.0: self.v_scrollbar.grid_remove()
+        else: self.v_scrollbar.grid(row=0, column=1, sticky="ns")
         self.v_scrollbar.set(first, last)
         self.root.after_idle(self._actualizar_esquina)
 
     def _gestionar_hbar(self, first, last):
-        if float(first) <= 0.0 and float(last) >= 1.0:
-            self.h_scrollbar.grid_remove()
-        else:
-            self.h_scrollbar.grid(row=1, column=0, sticky="ew")
+        if float(first) <= 0.0 and float(last) >= 1.0: self.h_scrollbar.grid_remove()
+        else: self.h_scrollbar.grid(row=1, column=0, sticky="ew")
         self.h_scrollbar.set(first, last)
         self.root.after_idle(self._actualizar_esquina)
-
-    # --- LÓGICA DE ARCHIVOS Y TEXTO ---
 
     def _recortar_ruta(self, ruta):
         partes = ruta.split(os.sep)
         prefijo = os.sep if ruta.startswith(os.sep) else ""
         clean_parts = [p for p in partes if p]
         if len(clean_parts) > 3:
-            primera = clean_parts[0]
-            padre = clean_parts[-2]
-            archivo = clean_parts[-1]
-            return f"{prefijo}{primera}{os.sep}...{os.sep}{padre}{os.sep}{archivo}"
+            return f"{prefijo}{clean_parts[0]}{os.sep}...{os.sep}{clean_parts[-2]}{os.sep}{clean_parts[-1]}"
         return ruta
 
     def _limpiar_placeholder(self, event):
-        contenido_actual = self.texto_input.get("1.0", tk.END).strip()
-        if contenido_actual == self.placeholder:
+        if self.texto_input.get("1.0", tk.END).strip() == self.placeholder:
             self.texto_input.delete("1.0", tk.END)
         self.texto_input.config(fg=self.color_texto_normal)
 
     def _restaurar_placeholder(self, event):
-        contenido_actual = self.texto_input.get("1.0", tk.END).strip()
-        if not contenido_actual:
+        if not self.texto_input.get("1.0", tk.END).strip():
             self.texto_input.insert("1.0", self.placeholder)
             self.texto_input.config(fg=self.color_placeholder)
 
     def borrar_texto(self):
         self.texto_input.delete("1.0", tk.END)
         self.status_var.set(self.status_default)
-        if self.root.focus_get() != self.texto_input:
-            self._restaurar_placeholder(None)
-        else:
-            self.texto_input.config(fg=self.color_texto_normal)
+        if self.root.focus_get() != self.texto_input: self._restaurar_placeholder(None)
+        else: self.texto_input.config(fg=self.color_texto_normal)
 
     def abrir_archivo(self):
-        ruta_archivo = filedialog.askopenfilename(
-            title="Seleccionar archivo",
-            filetypes=(("Todos los archivos", "*.*"),)
-        )
-        if ruta_archivo:
+        ruta = filedialog.askopenfilename(title="Seleccionar archivo", filetypes=(("Todos", "*.*"),))
+        if ruta:
             try:
-                with open(ruta_archivo, 'r', encoding='utf-8', errors='replace') as f:
+                with open(ruta, 'r', encoding='utf-8', errors='replace') as f:
                     contenido = f.read()
                 self.texto_input.delete("1.0", tk.END)
                 self.texto_input.config(fg=self.color_texto_normal)
                 self.texto_input.insert("1.0", contenido)
-                ruta_final = self._recortar_ruta(ruta_archivo)
-                self.status_var.set(f"Archivo: {ruta_final}")
+                self.status_var.set(f"Archivo: {self._recortar_ruta(ruta)}")
             except Exception as e:
-                messagebox.showerror("Error", f"No se pudo leer el archivo:\n{str(e)}")
+                messagebox.showerror("Error", str(e))
 
     def obtener_fuente(self, tamano):
-        fuentes_linux = [
-            "/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf",
-            "/usr/share/fonts/truetype/liberation/LiberationMono-Regular.ttf",
-            "/usr/share/fonts/truetype/ubuntu/UbuntuMono-R.ttf",
-            "arial.ttf"
-        ]
-        for ruta in fuentes_linux:
-            if os.path.exists(ruta):
-                return ImageFont.truetype(ruta, tamano)
+        fuentes = ["/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf", "arial.ttf"]
+        for r in fuentes:
+            if os.path.exists(r): return ImageFont.truetype(r, tamano)
         return ImageFont.load_default()
 
     def convertir(self):
@@ -241,31 +220,20 @@ class ConversorApp:
         if not contenido or contenido == self.placeholder:
             messagebox.showwarning("Vacío", "El cuadro de texto está vacío.")
             return
-        font_size = 48
-        padding = 50
         try:
-            font = self.obtener_fuente(font_size)
-            dummy_draw = ImageDraw.Draw(Image.new('RGB', (1, 1)))
-            lines = contenido.split("\n")
-            if lines and not lines[-1].strip(): lines.pop()
-            texto_procesado = "\n".join(lines)
-            left, top, right, bottom = dummy_draw.textbbox((0, 0), texto_procesado, font=font)
-            w = (right - left) + (padding * 2)
-            h = (bottom - top) + (padding * 2)
+            font = self.obtener_fuente(48)
+            dummy = ImageDraw.Draw(Image.new('RGB', (1, 1)))
+            left, top, right, bottom = dummy.textbbox((0, 0), contenido, font=font)
+            w, h = (right - left) + 100, (bottom - top) + 100
             img = Image.new('RGB', (int(w), int(h)), color=(30, 30, 30))
             draw = ImageDraw.Draw(img)
-            draw.text((padding, padding), texto_procesado, font=font, fill=(220, 220, 220))
-            
-            if not os.path.exists(self.ruta_salida):
-                os.makedirs(self.ruta_salida)
-                
-            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-            nombre_archivo = f"imgtxt_{timestamp}.jpg"
-            ruta_completa = os.path.join(self.ruta_salida, nombre_archivo)
-            img.save(ruta_completa, "JPEG", quality=100, optimize=True, subsampling=0)
-            messagebox.showinfo("Listo", f"Guardado:\n{nombre_archivo}")
+            draw.text((50, 50), contenido, font=font, fill=(220, 220, 220))
+            if not os.path.exists(self.ruta_salida): os.makedirs(self.ruta_salida)
+            ruta_f = os.path.join(self.ruta_salida, f"imgtxt_{datetime.now().strftime('%Y%m%d_%H%M%S')}.jpg")
+            img.save(ruta_f, "JPEG", quality=100)
+            messagebox.showinfo("Listo", f"Guardado en:\n{self.ruta_salida}")
         except Exception as e:
-            messagebox.showerror("Error", f"Ocurrió un error:\n{str(e)}")
+            messagebox.showerror("Error", str(e))
 
 if __name__ == "__main__":
     root = tk.Tk()
