@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 import tkinter as tk
-from tkinter import messagebox, filedialog  # Se agrega filedialog
+from tkinter import messagebox, filedialog
 from PIL import Image, ImageDraw, ImageFont
 import os
 from datetime import datetime
@@ -9,7 +9,7 @@ class ConversorApp:
     def __init__(self, root):
         self.root = root
         self.root.title("Txt2Img")
-        self.root.geometry("400x300")
+        self.root.geometry("400x320")
         self.root.configure(bg="#2E2E2E")
 
         # --- CONFIGURACIÓN DE RUTA Y COLORES ---
@@ -63,6 +63,30 @@ class ConversorApp:
             bg="#2A8C55", fg="white", font=("Arial", 9, "bold"), width=8, relief="flat")
         btn_convertir.pack(side="left", padx=10)
 
+        # --- BARRA DE ESTADO MEJORADA ---
+        self.status_default = "Ningún archivo seleccionado"
+        self.status_var = tk.StringVar(value=self.status_default)
+        # anchor=tk.CENTER para centrar y ipady=3 para mayor altura
+        self.status_bar = tk.Label(root, textvariable=self.status_var, bd=1, relief=tk.SUNKEN, 
+                                   anchor=tk.CENTER, bg="#1E1E1E", fg="#888888", font=("Arial", 9))
+        self.status_bar.pack(side=tk.BOTTOM, fill=tk.X, ipady=3)
+
+    def _recortar_ruta(self, ruta):
+        """Recorta la ruta al formato: /primera_carpeta/.../carpeta_padre/archivo"""
+        partes = ruta.split(os.sep)
+        # Identificamos si es una ruta absoluta en Linux para mantener el primer '/'
+        prefijo = os.sep if ruta.startswith(os.sep) else ""
+        
+        # Filtramos partes vacías
+        clean_parts = [p for p in partes if p]
+        
+        if len(clean_parts) > 3:
+            primera = clean_parts[0]
+            padre = clean_parts[-2]
+            archivo = clean_parts[-1]
+            return f"{prefijo}{primera}{os.sep}...{os.sep}{padre}{os.sep}{archivo}"
+        return ruta
+
     def _gestionar_vbar(self, first, last):
         if float(first) <= 0.0 and float(last) >= 1.0:
             self.v_scrollbar.grid_remove()
@@ -91,14 +115,13 @@ class ConversorApp:
 
     def borrar_texto(self):
         self.texto_input.delete("1.0", tk.END)
+        self.status_var.set(self.status_default)
         if self.root.focus_get() != self.texto_input:
             self._restaurar_placeholder(None)
         else:
             self.texto_input.config(fg=self.color_texto_normal)
 
     def abrir_archivo(self):
-        """Abre un explorador de archivos y carga el texto en el área de entrada."""
-        # Se permite cualquier tipo de archivo (*.*)
         ruta_archivo = filedialog.askopenfilename(
             title="Seleccionar archivo",
             filetypes=(("Todos los archivos", "*.*"),)
@@ -106,17 +129,16 @@ class ConversorApp:
         
         if ruta_archivo:
             try:
-                # 'errors=replace' permite leer archivos binarios o encriptados 
-                # mostrando símbolos en lugar de fallar.
                 with open(ruta_archivo, 'r', encoding='utf-8', errors='replace') as f:
                     contenido = f.read()
                 
-                # Limpiamos el widget, quitamos placeholder y seteamos el color normal
                 self.texto_input.delete("1.0", tk.END)
                 self.texto_input.config(fg=self.color_texto_normal)
-                
-                # Insertamos el texto del archivo
                 self.texto_input.insert("1.0", contenido)
+                
+                # Ruta recortada para la barra de estado
+                ruta_final = self._recortar_ruta(ruta_archivo)
+                self.status_var.set(f"Archivo: {ruta_final}")
                 
             except Exception as e:
                 messagebox.showerror("Error", f"No se pudo leer el archivo:\n{str(e)}")
