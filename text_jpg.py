@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 import tkinter as tk
 from tkinter import messagebox, filedialog
-from PIL import Image, ImageDraw, ImageFont
+from PIL import Image, ImageDraw, ImageFont, ImageTk  # Añadido ImageTk
 import os
 from datetime import datetime
 
@@ -22,16 +22,13 @@ class ConversorApp:
         self.container_texto = tk.Frame(root, bg="#1E1E1E")
         self.container_texto.pack(expand=True, fill="both", padx=10, pady=(10, 0))
         
-        # Configuración estricta de la rejilla para evitar solapamientos
-        self.container_texto.grid_rowconfigure(0, weight=1)    # Área del texto
-        self.container_texto.grid_rowconfigure(1, weight=0, minsize=16) # Fila del scroll H
-        self.container_texto.grid_columnconfigure(0, weight=1) # Área del texto
-        self.container_texto.grid_columnconfigure(1, weight=0, minsize=16) # Columna del scroll V
+        self.container_texto.grid_rowconfigure(0, weight=1)
+        self.container_texto.grid_rowconfigure(1, weight=0, minsize=16)
+        self.container_texto.grid_columnconfigure(0, weight=1)
+        self.container_texto.grid_columnconfigure(1, weight=0, minsize=16)
 
         self.v_scrollbar = tk.Scrollbar(self.container_texto, orient=tk.VERTICAL)
         self.h_scrollbar = tk.Scrollbar(self.container_texto, orient=tk.HORIZONTAL)
-        
-        # Cuadro para la esquina (gap) - Actúa como tope físico
         self.esquina = tk.Frame(self.container_texto, bg="#2E2E2E", width=16, height=16)
 
         self.texto_input = tk.Text(self.container_texto, wrap=tk.NONE, bg="#1E1E1E", 
@@ -42,7 +39,6 @@ class ConversorApp:
             yscrollcommand=self._gestionar_vbar,
             xscrollcommand=self._gestionar_hbar)
         
-        # El texto siempre ocupa la celda principal
         self.texto_input.grid(row=0, column=0, sticky="nsew")
         
         self.v_scrollbar.config(command=self.texto_input.yview)
@@ -59,9 +55,40 @@ class ConversorApp:
         self.centro_botones = tk.Frame(panel_bottom, bg="#2E2E2E")
         self.centro_botones.pack(anchor="center")
 
-        # Botón de configuración (Engranaje)
-        btn_config = tk.Button(self.centro_botones, text="⚙", 
-            bg="#444444", fg="white", font=("Arial", 9, "bold"), width=5, relief="flat")
+# Configuración del icono del botón
+        self.icon_config = None
+        ruta_script = os.path.dirname(os.path.abspath(__file__))
+        ruta_icono = os.path.join(ruta_script, "assets", "config_icon.png")
+        
+        try:
+            img_original = Image.open(ruta_icono)
+            
+            try:
+                filtro = Image.Resampling.LANCZOS
+            except AttributeError:
+                filtro = Image.LANCZOS 
+                
+            img_resizada = img_original.resize((18, 18), filtro)
+            self.icon_config = ImageTk.PhotoImage(img_resizada)
+            
+            # Ajuste de dimensiones y eliminación de bordes extra
+            btn_config = tk.Button(
+                self.centro_botones, 
+                image=self.icon_config, 
+                bg="#444444", 
+                relief="flat", 
+                width=26,              # Ancho reducido para estar más pegado
+                height=26,             # Alto reducido para estar más pegado
+                borderwidth=0,         # Elimina el borde físico
+                highlightthickness=0,  # Elimina el marco blanco de selección
+                padx=0,                # Elimina espacio interno horizontal
+                pady=0                 # Elimina espacio interno vertical
+            )
+        except Exception as e:
+            print(f"DEBUG: No se pudo cargar el icono: {e}")
+            btn_config = tk.Button(self.centro_botones, text="⚙", 
+                bg="#444444", fg="white", font=("Arial", 9, "bold"), width=5, relief="flat")
+
         btn_config.pack(side="left", padx=10)
 
         btn_borrar = tk.Button(self.centro_botones, text="BORRAR", command=self.borrar_texto,
@@ -82,10 +109,9 @@ class ConversorApp:
             anchor=tk.CENTER, bg="#1E1E1E", fg="#888888", font=("Arial", 9))
         self.status_bar.pack(side=tk.BOTTOM, fill=tk.X, ipady=3)
 
-    # --- GESTIÓN DE INTERFAZ (SOLUCIÓN AL BUG VISUAL) ---
+    # --- GESTIÓN DE INTERFAZ ---
 
     def _actualizar_esquina(self):
-        """Muestra el cuadrado de la esquina solo si ambas barras están presentes"""
         if self.v_scrollbar.winfo_ismapped() and self.h_scrollbar.winfo_ismapped():
             self.esquina.grid(row=1, column=1, sticky="nsew")
         else:
