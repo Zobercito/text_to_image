@@ -44,21 +44,28 @@ class ConversorApp:
         self.texto_input.bind("<FocusIn>", self._limpiar_placeholder)
         self.texto_input.bind("<FocusOut>", self._restaurar_placeholder)
 
-        # --- BOTONES ---
+        # --- BOTONES CENTRADOS ---
         panel_bottom = tk.Frame(root, bg="#2E2E2E")
         panel_bottom.pack(fill="x", pady=5)
 
-        btn_borrar = tk.Button(panel_bottom, text="Borrar", command=self.borrar_texto,
+        # Contenedor interno para centrar el grupo de botones
+        self.centro_botones = tk.Frame(panel_bottom, bg="#2E2E2E")
+        self.centro_botones.pack(anchor="center")
+
+        # Botón Borrar (Izquierda - Ancho 8)
+        btn_borrar = tk.Button(self.centro_botones, text="BORRAR", command=self.borrar_texto,
             bg="#A63434", fg="white", font=("Arial", 9, "bold"), width=8, relief="flat")
-        btn_borrar.pack(side="left", padx=10)
-    
-        btn_abrir = tk.Button(panel_bottom, text="Abrir archivo", command=self.abrir_archivo,
+        btn_borrar.pack(side="left", padx=10) # 10px de margen (total 20px entre botones)
+
+        # Botón Abrir (Centro - Ancho 10)
+        btn_abrir = tk.Button(self.centro_botones, text="ABRIR ARCHIVO", command=self.abrir_archivo,
             bg="#3465A4", fg="white", font=("Arial", 9, "bold"), width=12, relief="flat")
         btn_abrir.pack(side="left", padx=10)
 
-        btn_convertir = tk.Button(panel_bottom, text="CONVERTIR", command=self.convertir,
-            bg="#2A8C55", fg="white", font=("Arial", 9, "bold"), width=10, relief="flat")
-        btn_convertir.pack(side="right", padx=10)
+        # Botón Convertir (Derecha - Ancho 8)
+        btn_convertir = tk.Button(self.centro_botones, text="CONVERTIR", command=self.convertir,
+            bg="#2A8C55", fg="white", font=("Arial", 9, "bold"), width=8, relief="flat")
+        btn_convertir.pack(side="left", padx=10)
 
     # --- LÓGICA DE BARRAS DINÁMICAS ---
     def _gestionar_vbar(self, first, last):
